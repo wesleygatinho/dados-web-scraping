@@ -42,7 +42,7 @@ try:
     print(df.to_string(index=False))
 
     # Salvar como CSV 
-    df.to_excel("alunos_ativos.xlsx", index=False)
+    df.to_excel("alunos_ativos_bict.xlsx", index=False)
 
 finally:
     # Fechar o navegador
