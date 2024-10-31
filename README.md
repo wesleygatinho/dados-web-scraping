@@ -9,9 +9,13 @@ O script acessa a página de monografias concluídas do curso de Engenharia da C
 ## Requisitos
 
 - Python 3.x
-- Selenium
-- Pandas
-- ChromeDriver
+
+pip install{
+        - Selenium
+        - Pandas
+        - ChromeDriver
+        - openpyxl
+}
 
 ## Instalação
 

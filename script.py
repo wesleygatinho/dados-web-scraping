@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import time
+import sys
 
 #Configuração do WebDriver
 driver_path = "./chromedriver.exe"
@@ -56,11 +57,15 @@ try:
     # Converter para DataFrame
     df = pd.DataFrame(data, columns=["Ano", "Data", "Aluno", "Orientador", "Curso", "Titulo"])
 
+    # Definir a codificação padrão como UTF-8
+    sys.stdout.reconfigure(encoding='utf-8')
+
     # Exibe os dados no console de forma tabulada
     print(df.to_string(index=False))
 
-    # Salvar como CSV 
-    df.to_csv("alunos_concluidos.csv", index=False, sep="\t")
+    # Salvar como arquivo Excel (formato xlsx)
+    df.to_excel("alunos_concluidos_2023.xlsx", index=False, engine='openpyxl')
+
 
 finally:
     # Fechar o navegador
