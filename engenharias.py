@@ -14,12 +14,12 @@ driver = webdriver.Chrome(service=webdriver.chrome.service.Service(driver_path),
 
 try:
     #Acessar o site
-    url = "https://sigaa.ufma.br/sigaa/public/curso/monografias_curso.jsf?lc=pt_BR&lc=pt_BR&id=10816685"
+    url = "https://sigaa.ufma.br/sigaa/public/curso/concluidos_curso.jsf?lc=false&id=17150698"
     driver.get(url)
 
     #Clicando no botão de busca no site
     wait = WebDriverWait(driver, 20)
-    search_button = wait.until(EC.element_to_be_clickable((By.ID, "form:buscar")))
+    search_button = wait.until(EC.element_to_be_clickable((By.ID, "form:buscarTurmas")))
     search_button.click()
 
     # Aguardando a tela carregar
@@ -35,36 +35,27 @@ try:
         row = rows[i]
         cols = row.find_elements(By.TAG_NAME, "td")
 
-        if len(cols) >= 5:  # Linha padrão com informações principais
-            ano = cols[0].text.strip()
-            date = cols[1].text.strip()
-            aluno = cols[2].text.strip()
-            orientador = cols[3].text.strip()
-            curso = cols[4].text.strip()
+        if len(cols) >= 2:  # Linha padrão com informações principais
+            matricula = cols[0].text.strip()
+            aluno = cols[1].text.strip()
+            
         
-        # Verifica se a próxima linha contém o título
-            next_row = rows[i + 1]
-            next_cols = next_row.find_elements(By.TAG_NAME, "td")
-        
-        # Verificar se o <td> possui "colspan" e contém o texto "Título:"
-            titulo = ""
-            if len(next_cols) == 1 and "Título:" in next_cols[0].text:
-                titulo = next_cols[0].text.split("Título:")[1].strip()
+    
         
         # Adicionando dados à lista
-            data.append([ano, date, aluno, orientador, curso, titulo])
+            data.append([matricula, aluno])
 
-    # Converter para DataFrame
-    df = pd.DataFrame(data, columns=["Ano", "Data", "Aluno", "Orientador", "Curso", "Titulo"])
+   
+    df = pd.DataFrame(data, columns=["Matrícula", "Aluno"])
 
-    # Definir a codificação padrão como UTF-8
+    
     sys.stdout.reconfigure(encoding='utf-8')
 
-    # Exibe os dados no console de forma tabulada
+    
     print(df.to_string(index=False))
 
     # Salvar como arquivo Excel (formato xlsx)
-    df.to_excel("alunos_concluidos_2024.xlsx", index=False, engine='openpyxl')
+    df.to_excel("alunos_concluidos_ambiental_2022.xlsx", index=False, engine='openpyxl')
 
 
 finally:
