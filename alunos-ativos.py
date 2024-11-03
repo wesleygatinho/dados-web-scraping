@@ -12,7 +12,7 @@ options = webdriver.ChromeOptions()
 driver = webdriver.Chrome(service=webdriver.chrome.service.Service(driver_path), options=options)
 
 try:
-    #Acessar o site
+    #Acessa o site
     url = "https://sigaa.ufma.br/sigaa/public/curso/alunos_curso.jsf?lc=pt_BR&id=10816685"
     driver.get(url)
 
@@ -23,11 +23,11 @@ try:
 
     # Extrair dados da tabela
     data = []
-    for i in range(1, len(rows) - 1):  # Ignorar cabeçalho e última linha
+    for i in range(1, len(rows) - 1):
         row = rows[i]
         cols = row.find_elements(By.TAG_NAME, "td")
 
-        if len(cols) >= 2:  # Linha padrão com informações principais
+        if len(cols) >= 2:
             matricula = cols[0].text.strip()
             aluno = cols[1].text.strip()        
         
@@ -41,7 +41,7 @@ try:
     # Exibe os dados no console de forma tabulada
     print(df.to_string(index=False))
 
-    # Salvar como CSV 
+    # Salvar como Exel
     df.to_excel("alunos_ativos_bict.xlsx", index=False)
 
 finally:
