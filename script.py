@@ -13,7 +13,7 @@ options = webdriver.ChromeOptions()
 driver = webdriver.Chrome(service=webdriver.chrome.service.Service(driver_path), options=options)
 
 try:
-    #Acessar o site
+    #Acessa o site da url
     url = "https://sigaa.ufma.br/sigaa/public/curso/monografias_curso.jsf?lc=pt_BR&lc=pt_BR&id=10816685"
     driver.get(url)
 
@@ -31,11 +31,11 @@ try:
 
     # Extrair dados da tabela
     data = []
-    for i in range(1, len(rows) - 1):  # Ignorar cabeçalho e última linha
+    for i in range(1, len(rows) - 1):
         row = rows[i]
         cols = row.find_elements(By.TAG_NAME, "td")
 
-        if len(cols) >= 5:  # Linha padrão com informações principais
+        if len(cols) >= 5:
             ano = cols[0].text.strip()
             date = cols[1].text.strip()
             aluno = cols[2].text.strip()

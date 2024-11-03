@@ -31,11 +31,11 @@ try:
 
     # Extrair dados da tabela
     data = []
-    for i in range(1, len(rows) - 1):  # Ignorar cabeçalho e última linha
+    for i in range(1, len(rows) - 1):
         row = rows[i]
         cols = row.find_elements(By.TAG_NAME, "td")
 
-        if len(cols) >= 2:  # Linha padrão com informações principais
+        if len(cols) >= 2:
             matricula = cols[0].text.strip()
             aluno = cols[1].text.strip()
             
