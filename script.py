@@ -55,7 +55,7 @@ try:
             data.append([ano, date, aluno, orientador, curso, titulo])
 
     # Converter para DataFrame
-    df = pd.DataFrame(data, columns=["Ano", "Data", "Aluno", "Orientador", "Curso", "Titulo"])
+    df = pd.DataFrame(data, columns=["Ano", "Data", "Aluno", "Orientador", "Curso", "Título"])
 
     # Definir a codificação padrão como UTF-8
     sys.stdout.reconfigure(encoding='utf-8')
@@ -64,7 +64,7 @@ try:
     print(df.to_string(index=False))
 
     # Salvar como arquivo Excel (formato xlsx)
-    df.to_excel("alunos_concluidos_2024.xlsx", index=False, engine='openpyxl')
+    df.to_excel("alunos_concluidos_2018.xlsx", index=False, engine='openpyxl')
 
 
 finally:

@@ -4,7 +4,7 @@ Este projeto realiza a extração de dados de alunos ativos, alunos concluídos 
 
 ## Descrição
 
-O script acessa a página de alunos ativos, alunos concluídos e monografias concluídas do curso de Engenharia da Computação da UFMA, clica no botão de busca e extrai os dados da tabela de alunos concluídos. Os dados são então convertidos para um DataFrame do Pandas e salvos em um arquivo XLSX.
+O script acessa a página de alunos ativos, alunos concluídos e monografias concluídas das 6 engenharias da UFMA, clica no botão de busca e extrai os dados da tabela de alunos concluídos. Os dados são então convertidos para um DataFrame do Pandas e salvos em um arquivo XLSX.
 
 ## Requisitos
 
@@ -43,4 +43,4 @@ pip install{
     python engenharias.py
     python alunos-ativos.py
     ```
-3. O script irá acessar o site, clicar no botão de busca e extrair os dados da tabela com os dados dos alunos. Os dados serão exibidos no console e salvos em um arquivo Exel com o nome desejado.
+3. O script irá acessar o site, clicar no botão de busca e extrair os dados da tabela com os dados dos alunos. Os dados serão exibidos no console e salvos em um arquivo Excel com o nome desejado.

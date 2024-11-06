@@ -55,7 +55,7 @@ try:
     print(df.to_string(index=False))
 
     # Salvar como arquivo Excel (formato xlsx)
-    df.to_excel("alunos_concluidos_ambiental_2022.xlsx", index=False, engine='openpyxl')
+    df.to_excel("alunos_concluidos_amb_2018.xlsx", index=False, engine='openpyxl')
 
 
 finally:
