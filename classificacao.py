@@ -1,165 +1,134 @@
-# import pandas as pd
-# from sklearn.feature_extraction.text import TfidfVectorizer
-# from sklearn.cluster import KMeans
-# import numpy as np
-# import re
-# from unidecode import unidecode
-# import nltk
-# from nltk.corpus import stopwords
-
-# # Download de recursos do NLTK
-# nltk.download('stopwords')
-
-# # Carregar o arquivo com títulos e engenharia
-# file_path = 'C:/Users/User/Documents/dados-web-scraping/bict/alunos_bict_migracoes_atualizado.xlsx'
-# df = pd.read_excel(file_path)
-
-# # Verificar se as colunas necessárias existem
-# if 'Título' not in df.columns or 'Engenharia' not in df.columns:
-#     raise ValueError("O arquivo deve conter as colunas 'Título' e 'Engenharia'.")
-
-# # Função para limpar e padronizar os títulos
-# def preprocess_text(text):
-#     text = unidecode(text) 
-#     text = re.sub(r'\W+', ' ', text)  
-#     text = text.lower().strip()  
-#     tokens = text.split() 
-#     tokens = [word for word in tokens if word not in stopwords.words('portuguese')] 
-#     return ' '.join(tokens)
-
-# # Aplicar pré-processamento aos títulos
-# df['Título'] = df['Título'].dropna().apply(preprocess_text)
-
-# # Stopwords adicionais específicas
-# additional_stopwords = [
-#      "de", "da", "do", "para", "com", "em", "uma", "um", "por", "sobre", 
-#     "como", "que", "na", "no", "das", "dos", "as", "os", "e", "ou", "a", "o", "uso", "ma", "sao", "luis", "ufma", "estudo", "centro", "caso", "custo", "baixo", "baseado", "viabilidade", "federal", "maranhao", "universidade", "campus", "analise", "sobre", "avaliacao", "gestao"
-# ]
-
-# # Transformação com TF-IDF, incluindo bigramas e trigramas
-# vectorizer = TfidfVectorizer(stop_words=stopwords.words('portuguese') + additional_stopwords, ngram_range=(1, 3), max_df=0.85)
-# X = vectorizer.fit_transform(df['Título'])
-
-# # Aplicação do clustering K-Means com número de clusters ajustado para refletir melhor a distribuição
-# num_clusters = min(df['Engenharia'].nunique(), 10)  # Limite superior para evitar excesso de granularidade
-# kmeans = KMeans(n_clusters=num_clusters, random_state=42)
-# kmeans.fit(X)
-
-# # Adiciona os clusters ao DataFrame original
-# df_clusters = df[['Título', 'Engenharia']].copy()
-# df_clusters['Cluster'] = kmeans.labels_
-
-# # Palavras mais representativas em cada cluster para análise
-# top_n_words = 10
-# terms = np.array(vectorizer.get_feature_names_out())
-# top_words_per_cluster = {}
-
-# for cluster_num in range(num_clusters):
-#     centroid = kmeans.cluster_centers_[cluster_num]
-#     top_term_indices = centroid.argsort()[-top_n_words:][::-1]
-#     top_words = terms[top_term_indices]
-#     top_words_per_cluster[cluster_num] = top_words.tolist()
-
-# # Exibir as palavras principais por cluster, associando com a engenharia
-# cluster_to_engineering = df_clusters.groupby('Cluster')['Engenharia'].first().to_dict()
-
-# distribuicao_titulos = df['Engenharia'].value_counts()
-
-# for cluster, words in top_words_per_cluster.items():
-#     engenharia = cluster_to_engineering.get(cluster, "Engenharia Desconhecida")
-#     print(f"Cluster {cluster} ({engenharia}): {', '.join(words)}")
-
-# # Exibir a distribuição de títulos por engenharia
-# print("\nDistribuição de Títulos por Engenharia:")
-# print(distribuicao_titulos)
-
-# # Salvar o resultado em um arquivo Excel
-# output_path = 'titulos_classificados_por_engenharia.xlsx'
-# df_clusters.to_excel(output_path, index=False)
-
-# print(f"Arquivo salvo em: {output_path}")
-
+# Importando as bibliotecas necessárias
 import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import KMeans
 import numpy as np
-import re
-from unidecode import unidecode
 import nltk
 from nltk.corpus import stopwords
+from nltk.stem import RSLPStemmer
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
+from sklearn.svm import LinearSVC
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier, GradientBoostingClassifier
+from xgboost import XGBClassifier
+from nltk.tokenize import TreebankWordTokenizer
 
-# Download de recursos do NLTK
+# Certifique-se de baixar os recursos necessários do NLTK
+nltk.download('rslp')
+nltk.download('punkt')
 nltk.download('stopwords')
 
-# Carregar o arquivo com títulos e engenharia
-file_path = 'C:/Users/User/Documents/dados-web-scraping/bict/alunos_bict_migracoes_atualizado.xlsx'
+# Caminho do arquivo Excel
+file_path = r'C:\Users\User\Downloads\alunos_bict_migracoes_apenas_2.xlsx'
+
+# Lendo o arquivo Excel
 df = pd.read_excel(file_path)
 
-# Verificar se as colunas necessárias existem
-if 'Título' not in df.columns or 'Engenharia' not in df.columns:
-    raise ValueError("O arquivo deve conter as colunas 'Título' e 'Engenharia'.")
+# Mapeando as engenharias
+mapa_engenharias = {
+    'ENGENHARIA CÍVIL': 1,
+    'ENGENHARIA DA COMPUTAÇÃO': 2,
+    'ENGENHARIA MECÂNICA': 3,
+    'ENGENHARIA AEROESPACIAL': 4,
+    'ENGENHARIA AMBIENTAL E SANITÁRIA': 5,
+    'ENGENHARIA DE TRANSPORTES': 6,
+    'Não migrou': 0
+}
+df['Engenharia'] = df['Engenharia'].map(mapa_engenharias)
 
-# Função para limpar e padronizar os títulos
+# Salvando como CSV (opcional)
+df.to_csv('planilha_mod_csv.csv', index=False)
+
+# Lendo o CSV e extraindo os títulos
+classificacoes = pd.read_csv('planilha_mod_csv.csv')
+titulos = classificacoes['Título']
+
+# Preparando stop words e stemmer
+stop_words = set(stopwords.words('portuguese'))
+stemmer = RSLPStemmer()
+tokenizer = TreebankWordTokenizer()
+
+# Processamento de texto: remoção de stop words e aplicação do stemmer
 def preprocess_text(text):
-    text = unidecode(text)  # Remove acentuação
-    text = re.sub(r'\W+', ' ', text)  # Remove caracteres especiais
-    text = text.lower().strip()  # Converte para minúsculas e remove espaços desnecessários
-    tokens = text.split()  # Divide o texto em palavras de forma simples
-    tokens = [word for word in tokens if word not in stopwords.words('portuguese')]  # Remove stopwords
-    return ' '.join(tokens)
+    tokens = tokenizer.tokenize(text)
+    filtered_tokens = [stemmer.stem(word) for word in tokens if word.lower() not in stop_words]
+    return ' '.join(filtered_tokens)
 
-# Aplicar pré-processamento aos títulos
-df['Título'] = df['Título'].dropna().apply(preprocess_text)
+# Aplicando o pré-processamento em cada título
+titulos_processados = [preprocess_text(titulo) for titulo in titulos]
 
-# Rebalancear os dados de entrada para igualar o número de títulos por engenharia
-min_titulos = min(df['Engenharia'].value_counts())
-df_balanced = pd.concat([df[df['Engenharia'] == eng].sample(min_titulos, random_state=42) for eng in df['Engenharia'].unique() if len(df[df['Engenharia'] == eng]) >= min_titulos])
+# Exibindo as palavras transformadas (após remoção de stop words e stemming)
+print("\nPalavras transformadas:")
+for i, (original, transformado) in enumerate(zip(titulos[:5], titulos_processados[:5])):
+    print(f"Titulo original {i + 1}: {original}")
+    print(f"Titulo processado {i + 1}: {transformado}\n")
 
-# Stopwords adicionais específicas
-additional_stopwords = [
-    "uso", "ma", "sao", "luis", "ufma", "estudo", "centro",
-]
+# Vetorização com TF-IDF
+tfidf_vectorizer = TfidfVectorizer()
+x = tfidf_vectorizer.fit_transform(titulos_processados)
 
-# Transformação com TF-IDF, incluindo bigramas e trigramas com ponderação
-vectorizer = TfidfVectorizer(stop_words=stopwords.words('portuguese') + additional_stopwords, ngram_range=(1, 3), max_df=0.8, min_df=2)
-X = vectorizer.fit_transform(df_balanced['Título'])
+# Exibindo o texto vetorizado com TF-IDF (primeiras 5 linhas)
+print("\nTexto vetorizado com TF-IDF (primeiras 5 linhas):")
+tfidf_array = x.toarray()  # Converte a matriz esparsa em um array denso
+tfidf_df = pd.DataFrame(tfidf_array, columns=tfidf_vectorizer.get_feature_names_out())
+print(tfidf_df.head())  # Mostra as primeiras 5 linhas da matriz TF-IDF
 
-# Aplicação do clustering K-Means com número de clusters igual ao número de engenharias únicas
-num_clusters = df_balanced['Engenharia'].nunique()
-kmeans = KMeans(n_clusters=num_clusters, random_state=42)
-kmeans.fit(X)
+y = np.array(classificacoes['Engenharia'])
 
-# Adiciona os clusters ao DataFrame original
+# Definindo variáveis de treino e validação
+porcentagem_de_treino = 0.8
+tamanho_de_treino = int(porcentagem_de_treino * len(y))
+treino_dados = x[:tamanho_de_treino]
+treino_marcacoes = y[:tamanho_de_treino]
+validacao_dados = x[tamanho_de_treino:]
+validacao_marcacoes = y[tamanho_de_treino:]
 
-df_clusters = df_balanced[['Título', 'Engenharia']].copy()
-df_clusters['Cluster'] = kmeans.labels_
+# Função para treinar e avaliar os modelos com StratifiedKFold
+def predict(nome, modelo, treino_dados, treino_marcacoes):
+    kfold = StratifiedKFold(n_splits=10)
+    scores = cross_val_score(modelo, treino_dados, treino_marcacoes, cv=kfold)
+    taxa_de_acerto = np.mean(scores)
+    print(f"Taxa de acerto do {nome}: {taxa_de_acerto}")
+    return taxa_de_acerto
 
-# Palavras mais representativas em cada cluster para análise
-top_n_words = 10
-terms = np.array(vectorizer.get_feature_names_out())
-top_words_per_cluster = {}
+# Testando diferentes classificadores
+resultados = {}
 
-for cluster_num in range(num_clusters):
-    centroid = kmeans.cluster_centers_[cluster_num]
-    top_term_indices = centroid.argsort()[-top_n_words:][::-1]
-    top_words = terms[top_term_indices]
-    top_words_per_cluster[cluster_num] = top_words.tolist()
+# Modelo OneVsRest
+modeloOneVsRest = OneVsRestClassifier(LinearSVC(random_state=0))
+resultadoOneVsRest = predict("OneVsRest", modeloOneVsRest, treino_dados, treino_marcacoes)
+resultados[resultadoOneVsRest] = modeloOneVsRest
 
-# Exibir as palavras principais por cluster, associando com a engenharia
-cluster_to_engineering = df_clusters.groupby('Cluster')['Engenharia'].first().to_dict()
+# Modelo OneVsOne
+modeloOneVsOne = OneVsOneClassifier(LinearSVC(random_state=0))
+resultadoOneVsOne = predict("OneVsOne", modeloOneVsOne, treino_dados, treino_marcacoes)
+resultados[resultadoOneVsOne] = modeloOneVsOne
 
-distribuicao_titulos = df_balanced['Engenharia'].value_counts()
+# Modelo Multinomial Naive Bayes
+modeloMultinomial = MultinomialNB()
+resultadoMultinomial = predict("MultinomialNB", modeloMultinomial, treino_dados, treino_marcacoes)
+resultados[resultadoMultinomial] = modeloMultinomial
 
-for cluster, words in top_words_per_cluster.items():
-    engenharia = cluster_to_engineering.get(cluster, "Engenharia Desconhecida")
-    print(f"Cluster {cluster} ({engenharia}): {', '.join(words)}")
+# Modelo AdaBoost
+modeloAdaBoost = AdaBoostClassifier(algorithm='SAMME')
+resultadoAdaBoost = predict("AdaBoostClassifier", modeloAdaBoost, treino_dados, treino_marcacoes)
+resultados[resultadoAdaBoost] = modeloAdaBoost
 
-# Exibir a distribuição de títulos por engenharia
-print("\nDistribuição de Títulos por Engenharia (Amostrada):")
-print(distribuicao_titulos)
+# Modelo Random Forest
+modeloRandomForest = RandomForestClassifier(random_state=0)
+resultadoRandomForest = predict("RandomForest", modeloRandomForest, treino_dados, treino_marcacoes)
+resultados[resultadoRandomForest] = modeloRandomForest
 
-# Salvar o resultado em um arquivo Excel
-output_path = 'titulos_classificados_por_engenharia.xlsx'
-df_clusters.to_excel(output_path, index=False)
+# Modelo Gradient Boosting
+modeloGradientBoosting = GradientBoostingClassifier(random_state=0)
+resultadoGradientBoosting = predict("GradientBoosting", modeloGradientBoosting, treino_dados, treino_marcacoes)
+resultados[resultadoGradientBoosting] = modeloGradientBoosting
 
-print(f"Arquivo salvo em: {output_path}")
+# Modelo XGBoost
+modeloXGBoost = XGBClassifier(eval_metric='mlogloss', random_state=0)
+resultadoXGBoost = predict("XGBoost", modeloXGBoost, treino_dados, treino_marcacoes)
+resultados[resultadoXGBoost] = modeloXGBoost
+
+# Exibindo o modelo com melhor precisão
+melhor_modelo = max(resultados)
+print(f"\nMelhor modelo: {resultados[melhor_modelo]} com precisao de {melhor_modelo}")
