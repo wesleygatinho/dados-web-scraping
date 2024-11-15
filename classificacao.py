@@ -1,4 +1,3 @@
-# Importando as bibliotecas necessárias
 import pandas as pd
 import numpy as np
 import nltk
@@ -13,7 +12,6 @@ from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier, Gradien
 from xgboost import XGBClassifier
 from nltk.tokenize import TreebankWordTokenizer
 
-# Certifique-se de baixar os recursos necessários do NLTK
 nltk.download('rslp')
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -69,9 +67,9 @@ x = tfidf_vectorizer.fit_transform(titulos_processados)
 
 # Exibindo o texto vetorizado com TF-IDF (primeiras 5 linhas)
 print("\nTexto vetorizado com TF-IDF (primeiras 5 linhas):")
-tfidf_array = x.toarray()  # Converte a matriz esparsa em um array denso
+tfidf_array = x.toarray() 
 tfidf_df = pd.DataFrame(tfidf_array, columns=tfidf_vectorizer.get_feature_names_out())
-print(tfidf_df.head())  # Mostra as primeiras 5 linhas da matriz TF-IDF
+print(tfidf_df.head()) 
 
 y = np.array(classificacoes['Engenharia'])
 
